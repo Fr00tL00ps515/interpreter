@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.nio.file.Files;
 
 public class App {
@@ -39,7 +40,15 @@ public class App {
         ProcessBuilder pb = new ProcessBuilder(command);
         Process process = pb.start();
 
-        int exitCode = process.waitFor();
+        boolean finished = process.waitFor(2, TimeUnit.SECONDS);
+
+        if (!finished) {
+            System.out.println("Program took too long (possible infinite loop). Terminating...");
+            process.destroyForcibly(); // Kill the JS process
+            return;
+        }
+
+        int exitCode = process.exitValue();
         if (exitCode != 0) {
             System.out.println("Program crashed. Make sure to write the correct program");
             return;
