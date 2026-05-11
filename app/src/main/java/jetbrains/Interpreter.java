@@ -2,16 +2,16 @@ package jetbrains;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import jetbrains.common.*;
 
 public class Interpreter {
 
     static Set<String> globalVariables = new HashSet<>();
+    static Set<String> funcParameters = new HashSet<>();
 
     public static void main(String[] args) {
     }
@@ -25,19 +25,22 @@ public class Interpreter {
         for (int i = 0; i < splittedInput.length; i++) {
             String h = splittedInput[i];
 
-            if (h.equals("{"))
-                braceDepth++;
-            else if (h.equals("}"))
-                braceDepth--;
-
-            if (braceDepth == 0) {
-                if (h.equals("=")) {
-                    if (i == 0)
-                        throw new Exception("Incorrect syntax");
-
-                    globalVariables.add(splittedInput[i - 1]);
-                }
+            if (braceDepth != 0 && !h.equals(")") && !h.equals(",")) {
+                funcParameters.add(h);
             }
+
+            if (h.equals("("))
+                braceDepth++;
+            else if (h.equals(")"))
+                braceDepth--;
+            if (h.equals("=")) {
+                if (i == 0)
+                    throw new Exception("Incorrect syntax");
+
+                if (!funcParameters.contains(h))
+                    globalVariables.add(splittedInput[i - 1]);
+            }
+
         }
     }
 
@@ -62,7 +65,7 @@ public class Interpreter {
         if (globalVariables.contains(variableName)) {
             return statement;
         }
-        return "let " + statement;
+        return statement;
     }
 
     public static String handleIf(String statement, int pointer) throws Exception {
@@ -85,17 +88,17 @@ public class Interpreter {
             subString += statement.charAt(pointer++);
         }
         if (pointer >= statementSize) {
-            return res + handleLine(subString) + "}";
+            return res + handleStatement(subString) + "}";
         }
 
         pointer += 4;
-        res += handleLine(subString) + "} else";
+        res += handleStatement(subString) + "} else";
         // Code after else
         subString = "";
         while (pointer < statementSize) {
             subString += statement.charAt(pointer++);
         }
-        res += "{" + handleLine(subString) + "}";
+        res += "{" + handleStatement(subString) + "}";
         return res;
     }
 
@@ -116,7 +119,7 @@ public class Interpreter {
         while (pointer < statementSize)
             subString += statement.charAt(pointer++);
 
-        return res + handleLine(subString) + "}";
+        return res + handleStatement(subString) + "}";
     }
 
     public static String handleFun(String statement, int pointer) throws Exception {
@@ -137,7 +140,7 @@ public class Interpreter {
         String subString = "";
         while (pointer < statementSize && statement.charAt(pointer) != '}')
             subString += statement.charAt(pointer++);
-        return res + handleLine(subString) + "}";
+        return res + handleStatement(subString) + "}";
     }
 
     public static String handleLine(String codeLine) throws Exception {
@@ -145,7 +148,38 @@ public class Interpreter {
         int lineSize = codeLine.length();
         int pointer = 0;
 
-        List<String> statements = new ArrayList();
+        String res = "";
+
+        while (pointer < lineSize && codeLine.charAt(pointer) == ' ')
+            pointer++;
+        while (pointer < lineSize && codeLine.charAt(pointer) >= 65 && codeLine.charAt(pointer) <= 90
+                || codeLine.charAt(pointer) >= 97 && codeLine.charAt(pointer) <= 122)
+            word += codeLine.charAt(pointer++);
+
+        if (word.equals(KeyWords.IF.getValue())) {
+            res = handleIf(codeLine, pointer);
+        } else if (word.equals(KeyWords.WHILE.getValue())) {
+            res = handleWhile(codeLine, pointer);
+
+        } else if (word.equals(KeyWords.FUN.getValue())) {
+            res = handleFun(codeLine, pointer);
+
+        } else if (word.equals(KeyWords.RETURN.getValue())) {
+            res = codeLine;
+
+        } else {
+            res = handleVariables(codeLine, pointer, word);
+        }
+
+        return res;
+    }
+
+    public static String handleStatement(String codeLine) throws Exception {
+        String word = "";
+        int lineSize = codeLine.length();
+        int pointer = 0;
+
+        List<String> statements = new ArrayList<>();
 
         statements.add("");
         int counter = 0;
@@ -160,7 +194,7 @@ public class Interpreter {
             pointer++;
         }
 
-        List<String> results = new ArrayList<>(counter + 1);
+        List<String> results = new LinkedList<>();
 
         for (int i = 0; i < counter + 1; i++) {
             word = "";
@@ -174,18 +208,18 @@ public class Interpreter {
                 word += codeLine.charAt(pointer++);
 
             if (word.equals(KeyWords.IF.getValue())) {
-                results.set(i, handleIf(codeLine, pointer));
+                results.add(handleIf(codeLine, pointer));
             } else if (word.equals(KeyWords.WHILE.getValue())) {
-                results.set(i, handleWhile(codeLine, pointer));
+                results.add(handleWhile(codeLine, pointer));
 
             } else if (word.equals(KeyWords.FUN.getValue())) {
-                results.set(i, handleFun(codeLine, pointer));
+                results.add(handleFun(codeLine, pointer));
 
             } else if (word.equals(KeyWords.RETURN.getValue())) {
-                results.set(i, codeLine);
+                results.add(codeLine);
 
             } else {
-                results.set(i, handleVariables(codeLine, pointer, word));
+                results.add(handleVariables(codeLine, pointer, word));
             }
         }
 
@@ -199,7 +233,7 @@ public class Interpreter {
 
     public static String interpret(String sourceProgram) throws Exception {
         sourceProgram = sourceProgram.replace("{", " { ").replace("}", " } ")
-                .replace("(", " ( ").replace(")", " ) ");
+                .replace("(", " ( ").replace(")", " ) ").replace(",", " , ");
         String res = "";
         int programSize = sourceProgram.length();
 
