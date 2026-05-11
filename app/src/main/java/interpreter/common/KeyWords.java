@@ -1,4 +1,4 @@
-package jetbrains.common;
+package interpreter.common;
 
 public enum KeyWords {
     IF("if"),
