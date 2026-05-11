@@ -156,20 +156,13 @@ public class Interpreter {
                 || codeLine.charAt(pointer) >= 97 && codeLine.charAt(pointer) <= 122)
             word += codeLine.charAt(pointer++);
 
-        if (word.equals(KeyWords.IF.getValue())) {
-            res = handleIf(codeLine, pointer);
-        } else if (word.equals(KeyWords.WHILE.getValue())) {
-            res = handleWhile(codeLine, pointer);
-
-        } else if (word.equals(KeyWords.FUN.getValue())) {
-            res = handleFun(codeLine, pointer);
-
-        } else if (word.equals(KeyWords.RETURN.getValue())) {
-            res = codeLine;
-
-        } else {
-            res = handleVariables(codeLine, pointer, word);
-        }
+        res = switch (word) {
+            case "if" -> handleIf(codeLine, pointer);
+            case "while" -> handleWhile(codeLine, pointer);
+            case "fun" -> handleFun(codeLine, pointer);
+            case "return" -> codeLine;
+            default -> handleVariables(codeLine, pointer, word);
+        };
 
         return res;
     }
@@ -207,20 +200,14 @@ public class Interpreter {
                     || codeLine.charAt(pointer) >= 97 && codeLine.charAt(pointer) <= 122)
                 word += codeLine.charAt(pointer++);
 
-            if (word.equals(KeyWords.IF.getValue())) {
-                results.add(handleIf(codeLine, pointer));
-            } else if (word.equals(KeyWords.WHILE.getValue())) {
-                results.add(handleWhile(codeLine, pointer));
-
-            } else if (word.equals(KeyWords.FUN.getValue())) {
-                results.add(handleFun(codeLine, pointer));
-
-            } else if (word.equals(KeyWords.RETURN.getValue())) {
-                results.add(codeLine);
-
-            } else {
-                results.add(handleVariables(codeLine, pointer, word));
+            switch (word) {
+                case "if" -> results.add(handleIf(codeLine, pointer));
+                case "while" -> results.add(handleWhile(codeLine, pointer));
+                case "fun" -> results.add(handleFun(codeLine, pointer));
+                case "return" -> results.add(codeLine);
+                default -> results.add(handleVariables(codeLine, pointer, word));
             }
+
         }
 
         String res = "";
