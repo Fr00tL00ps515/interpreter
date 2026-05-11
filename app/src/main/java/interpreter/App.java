@@ -25,7 +25,7 @@ public class App {
     public static void main(String[] args) throws Exception {
         String codeLine = " ";
         while (!codeLine.equals("")) {
-            System.out.println("Type the source program: ");
+            System.out.println("Type the code line: ");
             codeLine = r.readLine();
             sourceProgram += codeLine.length() == 0 ? "" : codeLine + "\n";
         }
@@ -38,6 +38,12 @@ public class App {
         command.add("main.js");
         ProcessBuilder pb = new ProcessBuilder(command);
         Process process = pb.start();
+
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            System.out.println("Program crashed. Make sure to write the correct program");
+            return;
+        }
 
         // Read from .js input stream
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
