@@ -18,3 +18,8 @@ From the project root directory, run the following commands:
 Usage
 Once the program is running, it reads your input line by line directly from the terminal. Type your commands one at a time and press Enter after each one.
 To signal the end of your input, enter a newline character (\n) as the last line.
+
+Code example:
+x = 0
+y = 0
+while x < 3 do if x == 1 then y = 10 else y = y + 1, x = x + 1
